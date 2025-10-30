@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External IP Diagnostic Tool</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a modern, dark theme look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Dark background */
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#3B82F6',
+                        'secondary-gray': '#4B5563',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-2xl bg-gray-800 p-8 md:p-10 rounded-xl shadow-2xl border border-gray-700">
+
+        <h1 class="text-3xl font-extrabold text-primary-blue mb-6 border-b border-gray-700 pb-4">
+            Network Diagnostics & Client Information
+        </h1>
+
+        <!-- IP Address Result Card -->
+        <div class="bg-gray-700 p-6 rounded-lg mb-6 shadow-inner">
+            <h2 class="text-xl font-semibold text-white mb-3 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9h-3M9 21s4-6 4-9c0-2.209-1.791-4-4-4S5 9.791 5 12c0 3 4 9 4 9zm3-12h4"></path></svg>
+                Your External IP Address
+            </h2>
+            <div id="ip-display" class="text-4xl font-mono text-green-400 break-words">
+                <span class="text-lg text-gray-400">Loading...</span>
+            </div>
+            <p id="ip-status" class="text-sm mt-2 text-gray-400">This is the address used to connect to the internet.</p>
+        </div>
+        
+        <!-- Location Info Card (NEW) -->
+        <div class="bg-gray-700 p-6 rounded-lg mb-6 shadow-inner">
+            <h2 class="text-xl font-semibold text-white mb-3 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243m10.606-10.607a4 4 0 11-5.656 0 4 4 0 015.656 0z"></path></svg>
+                Approximate Geographic Location
+            </h2>
+            <div id="location-display" class="text-2xl font-mono text-yellow-400 break-words">
+                <span class="text-lg text-gray-400">Determining location...</span>
+            </div>
+            <p id="location-status" class="text-sm mt-2 text-gray-400">Location based on the detected IP address.</p>
+        </div>
+
+
+        <!-- Additional Diagnostic Info -->
+        <div class="space-y-4">
+            <!-- User Agent -->
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <p class="text-sm font-medium text-gray-300">Browser User Agent:</p>
+                <code id="user-agent" class="text-sm text-white font-mono break-all mt-1 block">
+                    <!-- Populated by JS -->
+                </code>
+            </div>
+
+            <!-- Screen Resolution -->
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <p class="text-sm font-medium text-gray-300">Screen Resolution:</p>
+                <p id="resolution" class="text-base text-white font-mono mt-1">
+                    <!-- Populated by JS -->
+                </p>
+            </div>
+        </div>
+
+        <button id="refresh-button" class="mt-8 w-full py-3 bg-primary-blue text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-150 shadow-md shadow-primary-blue/30" onclick="getIPAddress()">
+            Refresh Diagnostics
+        </button>
+    </div>
+
+    <script>
+        const IPIFY_API_URL = "https://api64.ipify.org?format=json";
+
+        // Global function for exponential backoff retry logic
+        const fetchWithRetry = async (url, options = {}, retries = 3, delay = 1000) => {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    console.error(`Fetch attempt ${i + 1} failed:`, error.message);
+                    if (i === retries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                }
+            }
+        };
+        
+        // UPDATED FUNCTION: Now uses a different Geolocation API (ipapi.co)
+        const getLocationData = async (ip) => {
+            const locationDisplay = document.getElementById('location-display');
+            const locationStatus = document.getElementById('location-status');
+            
+            // Using ipapi.co (which is more reliable in this environment)
+            const GEOLOC_API_URL = `https://ipapi.co/${ip}/json/`; 
+
+            locationDisplay.innerHTML = '<span class="text-lg text-gray-400">Fetching location...</span>';
+
+            try {
+                const response = await fetchWithRetry(GEOLOC_API_URL);
+                const data = await response.json();
+
+                // Check for error status from the new API structure
+                if (data.error) {
+                    throw new Error(data.reason || "Geolocation API failed.");
+                }
+
+                if (data.city && data.region && data.country_name) {
+                    // Display City, Region, Country Name
+                    const locationText = `${data.city}, ${data.region}, ${data.country_name}`;
+                    locationDisplay.textContent = locationText;
+                    locationStatus.textContent = "Location data successfully determined.";
+                } else {
+                    throw new Error("Geolocation data missing essential fields.");
+                }
+            } catch (error) {
+                console.error("Failed to get location data:", error);
+                locationDisplay.innerHTML = '<span class="text-2xl text-red-500">N/A</span>';
+                locationStatus.textContent = "Could not determine location.";
+            }
+        }
+
+        const getIPAddress = async () => {
+            const ipDisplay = document.getElementById('ip-display');
+            const ipStatus = document.getElementById('ip-status');
+            const refreshButton = document.getElementById('refresh-button');
+            const locationDisplay = document.getElementById('location-display');
+            const locationStatus = document.getElementById('location-status');
+
+            // Reset displays
+            ipDisplay.innerHTML = '<span class="text-lg text-gray-400">Fetching public IP...</span>';
+            ipStatus.textContent = "Connecting to external diagnostic server...";
+            locationDisplay.innerHTML = '<span class="text-lg text-gray-400">Awaiting IP to search location...</span>';
+            locationStatus.textContent = "Location based on the detected IP address.";
+            refreshButton.disabled = true;
+            refreshButton.textContent = "Loading...";
+
+            try {
+                // 1. Get IP Address
+                const response = await fetchWithRetry(IPIFY_API_URL);
+                const data = await response.json();
+                const ip = data.ip;
+
+                if (ip) {
+                    ipDisplay.textContent = ip;
+                    ipStatus.textContent = "External IP address successfully detected.";
+                    
+                    // 2. Get Location Data using the found IP
+                    await getLocationData(ip); 
+
+                } else {
+                    throw new Error("API response missing IP address.");
+                }
+
+            } catch (error) {
+                console.error("Failed to get external IP address:", error);
+                ipDisplay.innerHTML = '<span class="text-2xl text-red-500">Error!</span>';
+                ipStatus.textContent = `Could not fetch IP. Check your network connection. (Error: ${error.message.substring(0, 50)}...)`;
+                locationDisplay.innerHTML = '<span class="text-2xl text-red-500">Error!</span>';
+                locationStatus.textContent = "Cannot determine location without IP.";
+            } finally {
+                refreshButton.disabled = false;
+                refreshButton.textContent = "Refresh Diagnostics";
+            }
+        };
+
+        const displayLocalInfo = () => {
+            // Display User Agent
+            const userAgentElement = document.getElementById('user-agent');
+            userAgentElement.textContent = navigator.userAgent;
+
+            // Display Screen Resolution
+            const resolutionElement = document.getElementById('resolution');
+            resolutionElement.textContent = `${window.screen.width}px x ${window.screen.height}px`;
+        }
+
+        window.onload = function() {
+            displayLocalInfo();
+            getIPAddress();
+        };
+
+    </script>
+</body>
+</html>
