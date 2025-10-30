@@ -12,6 +12,12 @@
             font-family: 'Inter', sans-serif;
             background-color: #111827; /* Dark background */
         }
+        .text-neon-pink {
+            color: #FF69B4; /* Brighter accent color for the counter */
+        }
+        .text-neon-cyan {
+            color: #00FFFF; /* Bright cyan for the new metric */
+        }
     </style>
     <script>
         tailwind.config = {
@@ -34,7 +40,46 @@
             Network Diagnostics & Client Information
         </h1>
 
-        <!-- IP Address Result Card -->
+        <!-- Public Visitor Counter Card -->
+        <div class="bg-gray-700 p-6 rounded-lg mb-6 shadow-inner flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-semibold text-white mb-1 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-neon-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.143M9 16l-4 4"></path></svg>
+                    Public Page Views
+                </h2>
+                <p class="text-sm text-gray-400">Total visits from everyone, updated in real-time!</p>
+            </div>
+            <div id="visitor-count" class="text-5xl font-extrabold text-neon-pink">
+                0
+            </div>
+        </div>
+
+        <!-- Public Average Resolution Card -->
+        <div class="bg-gray-700 p-6 rounded-lg mb-6 shadow-inner flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-semibold text-white mb-1 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9.25 10m-.25 7V7m6 0v7m-3 0V7m3 7L13.75 17m.25-3l-.25-7"></path></svg>
+                    Avg. Screen Resolution (Public)
+                </h2>
+                <p class="text-sm text-gray-400">Average resolution of all visitors' devices.</p>
+            </div>
+            <div id="average-resolution" class="text-3xl font-mono text-neon-cyan">
+                -- x --
+            </div>
+        </div>
+        
+        <!-- NEW: Recent Public Visit Log -->
+        <div class="bg-gray-700 p-6 rounded-lg mb-6 shadow-inner">
+            <h2 class="text-xl font-semibold text-white mb-3 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7l3 3m0 0l-3 3m3-3H9"></path></svg>
+                Recent Public Visit Log (Last 5)
+            </h2>
+            <div id="visit-log-container" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                <p class="text-sm text-gray-400" id="log-status">Waiting for real-time log data...</p>
+            </div>
+        </div>
+        
+        <!-- IP Address Result Card (Your Info) -->
         <div class="bg-gray-700 p-6 rounded-lg mb-6 shadow-inner">
             <h2 class="text-xl font-semibold text-white mb-3 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9h-3M9 21s4-6 4-9c0-2.209-1.791-4-4-4S5 9.791 5 12c0 3 4 9 4 9zm3-12h4"></path></svg>
@@ -46,7 +91,7 @@
             <p id="ip-status" class="text-sm mt-2 text-gray-400">This is the address used to connect to the internet.</p>
         </div>
         
-        <!-- Location Info Card (NEW) -->
+        <!-- Location Info Card (Your Info) -->
         <div class="bg-gray-700 p-6 rounded-lg mb-6 shadow-inner">
             <h2 class="text-xl font-semibold text-white mb-3 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243m10.606-10.607a4 4 0 11-5.656 0 4 4 0 015.656 0z"></path></svg>
@@ -69,24 +114,42 @@
                 </code>
             </div>
 
-            <!-- Screen Resolution -->
+            <!-- Screen Resolution (Personal) -->
             <div class="bg-gray-700 p-4 rounded-lg">
-                <p class="text-sm font-medium text-gray-300">Screen Resolution:</p>
+                <p class="text-sm font-medium text-gray-300">Your Personal Screen Resolution:</p>
                 <p id="resolution" class="text-base text-white font-mono mt-1">
                     <!-- Populated by JS -->
                 </p>
             </div>
         </div>
 
-        <button id="refresh-button" class="mt-8 w-full py-3 bg-primary-blue text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-150 shadow-md shadow-primary-blue/30" onclick="getIPAddress()">
+        <button id="refresh-button" class="mt-8 w-full py-3 bg-primary-blue text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-150 shadow-md shadow-primary-blue/30">
             Refresh Diagnostics
         </button>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, increment, collection, query, limit, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- FIREBASE SETUP (MANDATORY GLOBALS) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let db = null;
+        let auth = null;
+        let hasLoggedSession = false; // Flag to ensure we only log a visit once per page load
+
+        // Firestore Paths for public data
+        const VISIT_DOC_PATH = `/artifacts/${appId}/public/data/diagnostics/visitorCount`;
+        const AVG_RESOLUTION_DOC_PATH = `/artifacts/${appId}/public/data/diagnostics/avgResolution`;
+        const VISIT_LOG_COLLECTION_PATH = `/artifacts/${appId}/public/data/visits`;
+        
+        // --- API & UI FUNCTIONS ---
         const IPIFY_API_URL = "https://api64.ipify.org?format=json";
 
-        // Global function for exponential backoff retry logic
         const fetchWithRetry = async (url, options = {}, retries = 3, delay = 1000) => {
             for (let i = 0; i < retries; i++) {
                 try {
@@ -103,46 +166,42 @@
             }
         };
         
-        // UPDATED FUNCTION: Now uses a different Geolocation API (ipapi.co)
+        // Function to fetch IP and Location, returning the location data
         const getLocationData = async (ip) => {
-            const locationDisplay = document.getElementById('location-display');
-            const locationStatus = document.getElementById('location-status');
-            
-            // Using ipapi.co (which is more reliable in this environment)
             const GEOLOC_API_URL = `https://ipapi.co/${ip}/json/`; 
-
-            locationDisplay.innerHTML = '<span class="text-lg text-gray-400">Fetching location...</span>';
-
+            
             try {
                 const response = await fetchWithRetry(GEOLOC_API_URL);
                 const data = await response.json();
 
-                // Check for error status from the new API structure
                 if (data.error) {
                     throw new Error(data.reason || "Geolocation API failed.");
                 }
 
-                if (data.city && data.region && data.country_name) {
-                    // Display City, Region, Country Name
-                    const locationText = `${data.city}, ${data.region}, ${data.country_name}`;
-                    locationDisplay.textContent = locationText;
-                    locationStatus.textContent = "Location data successfully determined.";
+                if (data.city && data.country_name) {
+                    return {
+                        city: data.city,
+                        region: data.region,
+                        country: data.country_name
+                    };
                 } else {
-                    throw new Error("Geolocation data missing essential fields.");
+                    return { city: "Unknown", region: "N/A", country: "N/A" };
                 }
             } catch (error) {
                 console.error("Failed to get location data:", error);
-                locationDisplay.innerHTML = '<span class="text-2xl text-red-500">N/A</span>';
-                locationStatus.textContent = "Could not determine location.";
+                return { city: "Error", region: "N/A", country: "N/A" };
             }
         }
 
-        const getIPAddress = async () => {
+        const getIPAddress = async (auth) => {
             const ipDisplay = document.getElementById('ip-display');
             const ipStatus = document.getElementById('ip-status');
             const refreshButton = document.getElementById('refresh-button');
             const locationDisplay = document.getElementById('location-display');
             const locationStatus = document.getElementById('location-status');
+            
+            let ip = null;
+            let locationData = { city: "N/A", region: "N/A", country: "N/A" };
 
             // Reset displays
             ipDisplay.innerHTML = '<span class="text-lg text-gray-400">Fetching public IP...</span>';
@@ -156,14 +215,18 @@
                 // 1. Get IP Address
                 const response = await fetchWithRetry(IPIFY_API_URL);
                 const data = await response.json();
-                const ip = data.ip;
+                ip = data.ip;
 
                 if (ip) {
                     ipDisplay.textContent = ip;
                     ipStatus.textContent = "External IP address successfully detected.";
                     
                     // 2. Get Location Data using the found IP
-                    await getLocationData(ip); 
+                    locationData = await getLocationData(ip); 
+                    
+                    const locationText = `${locationData.city}, ${locationData.country}`;
+                    locationDisplay.textContent = locationText;
+                    locationStatus.textContent = "Location data successfully determined.";
 
                 } else {
                     throw new Error("API response missing IP address.");
@@ -172,13 +235,16 @@
             } catch (error) {
                 console.error("Failed to get external IP address:", error);
                 ipDisplay.innerHTML = '<span class="text-2xl text-red-500">Error!</span>';
-                ipStatus.textContent = `Could not fetch IP. Check your network connection. (Error: ${error.message.substring(0, 50)}...)`;
+                ipStatus.textContent = `Could not fetch IP. Check your network connection.`;
                 locationDisplay.innerHTML = '<span class="text-2xl text-red-500">Error!</span>';
                 locationStatus.textContent = "Cannot determine location without IP.";
             } finally {
                 refreshButton.disabled = false;
                 refreshButton.textContent = "Refresh Diagnostics";
             }
+            
+            // Return collected data for logging
+            return { ip, locationData };
         };
 
         const displayLocalInfo = () => {
@@ -191,9 +257,195 @@
             resolutionElement.textContent = `${window.screen.width}px x ${window.screen.height}px`;
         }
 
+        // --- FIREBASE LOGIC ---
+
+        // NEW: 3. Public Visit Log Listener
+        const startVisitLogListener = () => {
+            if (!db) return;
+            const logContainer = document.getElementById('visit-log-container');
+            const logStatus = document.getElementById('log-status');
+            
+            // Query for the latest 5 entries, sorted by time (which is not guaranteed to be indexed, but helps presentation)
+            const q = collection(db, VISIT_LOG_COLLECTION_PATH);
+            
+            // Note: Since Firestore requires indexes for orderBy + limit, we will manually sort in JS
+            onSnapshot(q, (snapshot) => {
+                logContainer.innerHTML = ''; // Clear previous log
+                const logs = [];
+                snapshot.forEach(doc => logs.push(doc.data()));
+                
+                // Sort by timestamp (newest first) in memory
+                logs.sort((a, b) => b.timestamp - a.timestamp); 
+                
+                // Limit to the last 5 logs for display
+                const displayLogs = logs.slice(0, 5);
+                
+                if (displayLogs.length === 0) {
+                    logContainer.innerHTML = '<p class="text-sm text-gray-400">No public visits logged yet.</p>';
+                    return;
+                }
+
+                displayLogs.forEach(log => {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'p-3 bg-gray-900 rounded-lg text-xs border border-gray-700';
+                    
+                    const time = log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleTimeString() : 'N/A';
+                    
+                    logEntry.innerHTML = `
+                        <p class="text-green-300 font-bold">${time} - ${log.location.city}, ${log.location.country}</p>
+                        <p class="text-gray-400 mt-1">
+                            <span class="font-mono text-cyan-300">${log.userId.substring(0, 4)}...</span> 
+                            via ${log.os}
+                        </p>
+                    `;
+                    logContainer.appendChild(logEntry);
+                });
+                
+            }, (error) => {
+                console.error("Error fetching visit log:", error);
+                logContainer.innerHTML = '<p class="text-sm text-red-500">Error loading visit log.</p>';
+            });
+        };
+        
+        // NEW: 4. Log the user's visit data
+        const logVisitData = async (userId, locationData) => {
+            if (!db || !userId || hasLoggedSession) return;
+            
+            const logEntry = {
+                userId: userId, // Non-identifying session ID
+                location: locationData,
+                os: navigator.userAgent.split(/[()]/)[1] || navigator.userAgent.substring(0, 50), // Extract OS roughly
+                timestamp: serverTimestamp(),
+                screenResolution: `${window.screen.width}x${window.screen.height}`
+            };
+            
+            try {
+                await addDoc(collection(db, VISIT_LOG_COLLECTION_PATH), logEntry);
+                hasLoggedSession = true;
+                console.log("Visit data logged successfully.");
+            } catch (e) {
+                console.error("Error logging visit data:", e);
+            }
+        };
+
+        // 1. Visitor Count Listener (Unchanged)
+        const startVisitorCountListener = () => {
+            if (!db) return;
+            const docRef = doc(db, VISIT_DOC_PATH);
+            const visitorCountElement = document.getElementById('visitor-count');
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const count = docSnap.data().count || 0;
+                    visitorCountElement.textContent = count.toLocaleString();
+                } else {
+                    setDoc(docRef, { count: 0 }, { merge: true }).catch(e => console.error("Error setting initial count:", e));
+                    visitorCountElement.textContent = '0';
+                }
+            }, (error) => {
+                console.error("Error fetching visitor count:", error);
+                visitorCountElement.textContent = 'Error';
+            });
+        };
+
+        // 2. Average Resolution Listener (Unchanged)
+        const startAverageResolutionListener = () => {
+            if (!db) return;
+            const docRef = doc(db, AVG_RESOLUTION_DOC_PATH);
+            const avgResolutionElement = document.getElementById('average-resolution');
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const totalWidth = data.totalWidth || 0;
+                    const totalHeight = data.totalHeight || 0;
+                    const count = data.count || 0;
+                    if (count > 0) {
+                        const avgWidth = Math.round(totalWidth / count);
+                        const avgHeight = Math.round(totalHeight / count);
+                        avgResolutionElement.textContent = `${avgWidth}px x ${avgHeight}px`;
+                    } else {
+                        avgResolutionElement.textContent = '-- x --';
+                    }
+                } else {
+                    avgResolutionElement.textContent = 'Collecting initial data...';
+                }
+            }, (error) => {
+                console.error("Error fetching average resolution:", error);
+                avgResolutionElement.textContent = 'Error';
+            });
+        };
+
+        // 5. Update Aggregate Data (Increment Count and Resolution)
+        const updateAggregateData = () => {
+            if (!db || hasLoggedSession) return;
+            
+            // Increment Visitor Count
+            setDoc(doc(db, VISIT_DOC_PATH), { count: increment(1) }, { merge: true })
+                .catch(e => console.error("Error incrementing visitor count:", e));
+
+            // Update Average Resolution Data
+            const width = window.screen.width;
+            const height = window.screen.height;
+            setDoc(doc(db, AVG_RESOLUTION_DOC_PATH), {
+                totalWidth: increment(width),
+                totalHeight: increment(height),
+                count: increment(1)
+            }, { merge: true })
+            .catch(e => console.error("Error updating average resolution data:", e));
+        };
+
+        // 6. Main Initialization
+        const initializeAppAndAuth = async () => {
+            if (!firebaseConfig.apiKey) {
+                console.warn("Firebase configuration is missing. Cannot use database features.");
+                return;
+            }
+            
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // 1. Start all real-time listeners
+                        startVisitorCountListener();
+                        startAverageResolutionListener();
+                        startVisitLogListener(); // Start listening for the log
+
+                        // 2. Fetch IP and Location (Async)
+                        const { ip, locationData } = await getIPAddress(auth);
+                        
+                        // 3. Update aggregate metrics and log the visit (only once per load)
+                        updateAggregateData();
+                        logVisitData(user.uid, locationData); 
+
+                    } else {
+                        console.log("User signed out or authentication failed.");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase Auth error:", error);
+            }
+        };
+
         window.onload = function() {
             displayLocalInfo();
-            getIPAddress();
+            initializeAppAndAuth();
+
+            // FIX: Manually attach the event listener for the button
+            const refreshButton = document.getElementById('refresh-button');
+            if (refreshButton) {
+                // The refresh button only re-fetches the user's IP/Location, it does not re-log the visit
+                // since logging is handled automatically once per page load.
+                refreshButton.addEventListener('click', () => getIPAddress(auth));
+            }
         };
 
     </script>
